@@ -3,6 +3,8 @@ import Navbar from './components/Navbar';
 import Home from './components/Home';
 import LearnWithMe from './components/LearnWithMe';
 import ReactQuestions from './components/ReactQuestions';
+import JavascriptQuestions from './components/JavascriptQuestions';
+import NodejsQuestions from './components/NodejsQuestions';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -15,6 +17,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/learn" element={<LearnWithMe />} />
         <Route path="/learn/react" element={<ReactQuestions />} />
+        <Route path="/learn/javascript" element={<JavascriptQuestions />} />
+        <Route path="/learn/nodejs" element={<NodejsQuestions />} />
       </Routes>
       <Footer />
     </div>
