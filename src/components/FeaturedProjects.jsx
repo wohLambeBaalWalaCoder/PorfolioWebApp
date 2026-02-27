@@ -1,10 +1,13 @@
-import { ExternalLink, Github } from 'lucide-react';
+import { ExternalLink, Github, ArrowUpRight } from 'lucide-react';
+import RevealOnScroll from './RevealOnScroll';
 
 export default function FeaturedProjects() {
     return (
         <section id="lab" className="py-24 px-6 relative">
             <div className="max-w-6xl mx-auto">
-                <h2 className="text-3xl md:text-5xl font-black mb-24 text-center text-white tracking-tight leading-tight uppercase animate-float">Personal Projects</h2>
+                <RevealOnScroll>
+                    <h2 className="text-3xl md:text-5xl font-black mb-24 text-center text-white tracking-tight leading-tight uppercase animate-float">Personal Projects</h2>
+                </RevealOnScroll>
 
                 <div className="flex flex-col gap-32">
                     {/* Project 1: News Aggregator */}

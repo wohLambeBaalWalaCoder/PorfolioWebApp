@@ -1,4 +1,5 @@
 import { Laptop, Briefcase, MapPin, Calendar } from 'lucide-react';
+import RevealOnScroll from './RevealOnScroll';
 
 const experiences = [
     {
@@ -33,17 +34,19 @@ export default function Experience() {
     return (
         <section id="experience" className="py-32 px-6 relative">
             <div className="max-w-6xl mx-auto">
-                <h2 className="text-3xl md:text-5xl font-black mb-16 text-center tracking-tight flex justify-center uppercase">
-                    {"Work Experience".split("").map((char, index) => (
-                        <span
-                            key={index}
-                            className={`${char === " " ? "ml-4" : ""} inline-block animate-[cascade_1.5s_ease-in-out_infinite_alternate] text-transparent bg-clip-text bg-gradient-to-b from-white via-slate-200 to-slate-500`}
-                            style={{ animationDelay: `${index * 0.1}s` }}
-                        >
-                            {char}
-                        </span>
-                    ))}
-                </h2>
+                <RevealOnScroll>
+                    <h2 className="text-3xl md:text-5xl font-black mb-16 text-center tracking-tight flex justify-center uppercase">
+                        {"Work Experience".split("").map((char, index) => (
+                            <span
+                                key={index}
+                                className={`${char === " " ? "ml-4" : ""} inline-block animate-[cascade_1.5s_ease-in-out_infinite_alternate] text-transparent bg-clip-text bg-gradient-to-b from-white via-slate-200 to-slate-500`}
+                                style={{ animationDelay: `${index * 0.1}s` }}
+                            >
+                                {char}
+                            </span>
+                        ))}
+                    </h2>
+                </RevealOnScroll>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {experiences.map((exp, index) => (

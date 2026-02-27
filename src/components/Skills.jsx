@@ -1,4 +1,5 @@
 import { Server, Cloud, Code, Wrench, Database, ShieldCheck } from 'lucide-react';
+import RevealOnScroll from './RevealOnScroll';
 
 const skillCategories = [
     {
@@ -37,9 +38,11 @@ export default function Skills() {
     return (
         <section id="skills" className="py-24 px-6 relative">
             <div className="max-w-6xl mx-auto">
-                <h2 className="text-3xl md:text-5xl font-black mb-16 text-center text-white tracking-tight leading-tight uppercase animate-float">
-                    Technical Skills
-                </h2>
+                <RevealOnScroll>
+                    <h2 className="text-3xl md:text-5xl font-black mb-16 text-center text-white tracking-tight leading-tight uppercase animate-float">
+                        Technical Skills
+                    </h2>
+                </RevealOnScroll>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {skillCategories.map((category, index) => (
