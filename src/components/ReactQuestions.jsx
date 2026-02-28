@@ -1,11 +1,14 @@
 import { useState, useMemo } from 'react';
 import { reactData } from '../data/reactQuestions';
-import { ChevronDown, Atom, ArrowLeft, Search, Eye, EyeOff, CheckCircle2, Circle, FilterX } from 'lucide-react';
+import { ChevronDown, Atom, ArrowLeft, Search, Eye, EyeOff, CheckCircle2, Circle, FilterX, Copy, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export default function ReactQuestions() {
     const [openIndex, setOpenIndex] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [copiedId, setCopiedId] = useState(null);
 
     const [isFlashcardMode, setIsFlashcardMode] = useState(false);
     const [revealedAnswers, setRevealedAnswers] = useState(new Set());
@@ -40,6 +43,13 @@ export default function ReactQuestions() {
             nextRevealed.add(id);
         }
         setRevealedAnswers(nextRevealed);
+    };
+
+    const handleCopyCode = (code, id, e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(code);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
     };
 
 
@@ -79,8 +89,12 @@ export default function ReactQuestions() {
                                 {reactData.title}
                             </h1>
                             <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-400 font-medium">
-                                <span className="px-3 py-1 bg-slate-800 rounded-full border border-slate-700">Level: {reactData.level.replace(/-/g, ' ')}</span>
-                                <span className="px-3 py-1 bg-slate-800 rounded-full border border-slate-700">{reactData.totalQuestions} Questions</span>
+                                <span className="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-full border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+                                    Level: {reactData.level.replace(/-/g, ' ')}
+                                </span>
+                                <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                                    {reactData.totalQuestions} Questions
+                                </span>
                                 <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
                                     {progressPercentage}% Mastered
                                 </span>
@@ -203,15 +217,74 @@ export default function ReactQuestions() {
 
                                 <div
                                     className={`transition-all duration-300 ease-in-out relative z-10
-                                        ${isOpen ? 'max-h-[800px] opacity-100 pb-6' : 'max-h-0 opacity-0'}`}
+                                        ${isOpen ? 'max-h-[3000px] opacity-100 pb-6' : 'max-h-0 opacity-0'}`}
                                 >
                                     <div className="w-[calc(100%-48px)] mx-auto h-[1px] bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent mb-6"></div>
 
                                     <div className="relative px-4 sm:px-6 sm:ml-[76px]">
-                                        <div className={`pr-4 sm:pr-8 text-slate-300/90 leading-relaxed font-medium transition-all duration-500 ${isBlurred ? 'blur-md select-none opacity-50' : 'blur-none opacity-100'}`}>
-                                            {q.answer.split('\n').map((paragraph, i) => (
-                                                <p key={i} className={i !== 0 ? "mt-3" : ""}>{paragraph}</p>
+                                        <div className={`pr-4 sm:pr-8 transition-all duration-500 ${isBlurred ? 'blur-md select-none opacity-50' : 'blur-none opacity-100'}`}>
+                                            {/* Auto-Sentence Parser */}
+                                            {q.answer.split(/(?<=\.|\?|\!)(?=\s+[A-Z])/).map((sentence, i) => (
+                                                <div key={i} className={`flex items-start ${i !== 0 ? "mt-4" : ""}`}>
+                                                    <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full mt-2.5 mr-3 bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></div>
+                                                    <p className="leading-relaxed text-[15px] sm:text-base text-slate-200 font-medium">
+                                                        {sentence.trim()}
+                                                    </p>
+                                                </div>
                                             ))}
+
+                                            {q.codeSnippet && (
+                                                <div className="mt-6 rounded-xl overflow-hidden border border-white/5 shadow-2xl bg-[#0f111a]">
+                                                    {/* Code Header Bar */}
+                                                    <div className="flex items-center justify-between px-4 py-2.5 bg-[#1a1d27] border-b border-white/5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex gap-2 mr-4">
+                                                                <div className="w-3 h-3 rounded-full bg-rose-500/80 shadow-[0_0_10px_rgba(244,63,94,0.4)]"></div>
+                                                                <div className="w-3 h-3 rounded-full bg-amber-500/80 shadow-[0_0_10px_rgba(245,158,11,0.4)]"></div>
+                                                                <div className="w-3 h-3 rounded-full bg-emerald-500/80 shadow-[0_0_10px_rgba(16,185,129,0.4)]"></div>
+                                                            </div>
+                                                            <span className="text-xs font-mono font-medium text-slate-400">example.js</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => handleCopyCode(q.codeSnippet, q.id, e)}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-all group"
+                                                            title="Copy code"
+                                                        >
+                                                            {copiedId === q.id ? (
+                                                                <>
+                                                                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                                                    <span className="text-xs font-medium text-emerald-400">Copied!</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Copy className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
+                                                                    <span className="text-xs font-medium text-slate-400 group-hover:text-white transition-colors">Copy</span>
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Code Body */}
+                                                    <div className="overflow-x-auto text-[13px] sm:text-sm">
+                                                        <SyntaxHighlighter
+                                                            language="jsx"
+                                                            style={vscDarkPlus}
+                                                            customStyle={{
+                                                                margin: 0,
+                                                                padding: '1.25rem',
+                                                                background: 'transparent',
+                                                                fontSize: 'inherit',
+                                                                lineHeight: '1.6',
+                                                            }}
+                                                            wrapLines={true}
+                                                            showLineNumbers={true}
+                                                            lineNumberStyle={{ minWidth: '3em', paddingRight: '1em', color: '#6e7681', textAlign: 'right' }}
+                                                        >
+                                                            {q.codeSnippet}
+                                                        </SyntaxHighlighter>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {isBlurred && (

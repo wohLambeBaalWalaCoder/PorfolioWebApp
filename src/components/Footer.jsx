@@ -4,7 +4,7 @@ export default function Footer() {
     return (
         <footer className="py-16 px-6 border-t border-white/5 relative bg-slate-950 mt-12">
             <div className="max-w-6xl mx-auto flex flex-col items-start gap-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-white tracking-wide">Let's Connect</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-white tracking-wide">Say Hello</h2>
                 <a href="mailto:hello@avinash.dev" className="text-xl md:text-2xl font-light text-purple-400 hover:text-purple-300 transition-colors mb-6 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)]">
                     hello@avinash.dev
                 </a>

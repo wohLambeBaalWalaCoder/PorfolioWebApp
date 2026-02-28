@@ -1,4 +1,4 @@
-import { Code2, Menu, X } from 'lucide-react';
+import { Code2, Menu, X, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { HashLink } from 'react-router-hash-link';
 import { useEffect, useState } from 'react';
@@ -52,35 +52,34 @@ export default function Navbar() {
                     </div>
 
                     {/* The Text Section */}
-                    <span className="text-base md:text-lg lg:text-xl font-bold tracking-tight text-slate-100 hidden sm:flex items-baseline">
+                    <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-tight text-slate-100 flex items-baseline">
                         <span className="inline-block transition-all duration-300 relative bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300 group-hover:from-cyan-400 group-hover:via-purple-400 group-hover:to-pink-500">
-                            CodingVibes<span className="font-light text-sm md:text-base opacity-70 transition-opacity duration-500 text-slate-300 group-hover:text-transparent">With</span>Avinash
+                            CodingVibes<span className="font-light text-xs sm:text-sm md:text-base opacity-70 transition-opacity duration-500 text-slate-300 group-hover:text-transparent">With</span>Avinash
 
                             {/* Hidden glow that fades in underneath the text */}
                             <span className="absolute -inset-2 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-700 rounded-full -z-10"></span>
                         </span>
 
                         {/* Bouncing Dot */}
-                        <span className="text-cyan-400 text-xl md:text-2xl leading-none animate-bounce inline-block ml-0.5 group-hover:text-pink-500 transition-colors duration-500 transform group-hover:translate-y-[-2px] group-active:translate-y-[4px]">.</span>
+                        <span className="text-cyan-400 text-lg sm:text-xl md:text-2xl leading-none animate-bounce inline-block ml-0.5 group-hover:text-pink-500 transition-colors duration-500 transform group-hover:translate-y-[-2px] group-active:translate-y-[4px]">.</span>
                     </span>
                 </Link>
 
-                {/* Desktop Navigation Links - Pill Design */}
-                <div className="hidden md:flex items-center gap-1 bg-slate-950/60 p-1.5 rounded-full border border-white/5 shadow-inner">
-                    <HashLink smooth to="/#home" onClick={() => setActiveSection('home')} className={getLinkClasses('home')}>
-                        Home
-                    </HashLink>
-                    <HashLink smooth to="/#experience" onClick={() => setActiveSection('experience')} className={getLinkClasses('experience')}>
-                        Work
-                    </HashLink>
-                    <HashLink smooth to="/#lab" onClick={() => setActiveSection('lab')} className={getLinkClasses('lab')}>
-                        Lab
-                    </HashLink>
+                {/* Desktop Navigation Links - Premium Learn Button */}
+                <div className="hidden md:flex items-center">
                     <Link to="/learn" onClick={() => {
                         setActiveSection('learn');
                         window.scrollTo(0, 0);
-                    }} className={getLinkClasses('learn')}>
-                        LearnWithMe
+                    }} className={`
+                        group relative flex items-center gap-2 px-6 py-2.5 rounded-full overflow-hidden transition-all duration-500
+                        ${activeSection === 'learn'
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-[0_0_30px_rgba(168,85,247,0.5)] text-white border-none scale-105'
+                            : 'bg-slate-950/80 border border-purple-500/30 text-purple-300 hover:text-white hover:border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:bg-slate-900'}
+                    `}>
+                        {/* Inner glow on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <Sparkles className={`w-4 h-4 relative z-10 ${activeSection === 'learn' ? 'animate-pulse text-white' : 'text-purple-400 group-hover:text-pink-300 transition-colors'}`} />
+                        <span className="relative z-10 font-bold tracking-wider text-sm">LearnWithMe</span>
                     </Link>
                 </div>
 
@@ -94,13 +93,6 @@ export default function Navbar() {
                     </button>
                 </div>
 
-                {/* Desktop Action Button */}
-                <div className="hidden md:flex items-center ml-4 md:ml-0">
-                    <a href="mailto:hello@avinash.dev" className="text-xs md:text-sm font-bold tracking-widest text-white border border-purple-500/50 bg-purple-500/10 rounded-full px-5 md:px-6 py-2.5 hover:bg-purple-500 hover:text-white hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] transition-all duration-300">
-                        CONTACT
-                    </a>
-                </div>
-
             </nav>
 
             {/* Mobile Dropdown Menu */}
@@ -110,17 +102,18 @@ export default function Navbar() {
                     <HashLink smooth to="/#home" onClick={() => setActiveSection('home')} className={getLinkClasses('home', true)}>
                         Home
                     </HashLink>
-                    <HashLink smooth to="/#experience" onClick={() => setActiveSection('experience')} className={getLinkClasses('experience', true)}>
-                        Work
-                    </HashLink>
-                    <HashLink smooth to="/#lab" onClick={() => setActiveSection('lab')} className={getLinkClasses('lab', true)}>
-                        Lab
-                    </HashLink>
                     <Link to="/learn" onClick={() => {
                         setActiveSection('learn');
                         window.scrollTo(0, 0);
-                    }} className={getLinkClasses('learn', true)}>
-                        LearnWithMe
+                    }} className={`
+                        group relative flex items-center justify-center gap-2 w-full py-4 rounded-xl overflow-hidden transition-all duration-300
+                        ${activeSection === 'learn'
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)]'
+                            : 'bg-slate-950/50 border border-purple-500/30 text-purple-300 hover:text-white hover:border-purple-400'}
+                    `}>
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <Sparkles className={`w-5 h-5 relative z-10 ${activeSection === 'learn' ? 'animate-pulse' : 'text-purple-400 group-hover:text-pink-300'}`} />
+                        <span className="relative z-10 font-bold tracking-widest text-sm">LearnWithMe</span>
                     </Link>
 
                     <div className="h-[1px] bg-white/10 w-full my-3"></div>
