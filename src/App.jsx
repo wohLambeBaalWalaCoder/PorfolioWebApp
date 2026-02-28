@@ -6,7 +6,6 @@ import ReactQuestions from './components/ReactQuestions';
 import JavascriptQuestions from './components/JavascriptQuestions';
 import NodejsQuestions from './components/NodejsQuestions';
 import AwsQuestions from './components/AwsQuestions';
-import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 
 function App() {
@@ -22,7 +21,6 @@ function App() {
         <Route path="/learn/nodejs" element={<NodejsQuestions />} />
         <Route path="/learn/aws" element={<AwsQuestions />} />
       </Routes>
-      <Footer />
     </div>
   )
 }
