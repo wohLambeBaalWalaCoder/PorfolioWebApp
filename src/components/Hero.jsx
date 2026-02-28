@@ -46,7 +46,7 @@ export default function Hero() {
                     <div className="absolute -inset-2 bg-gradient-to-tr from-violet-600 to-purple-500 rounded-full blur opacity-60 group-hover:opacity-100 transition duration-1000 animate-pulse" />
                     <div className="relative w-36 h-36 rounded-full border border-white/10 bg-slate-900 overflow-hidden flex items-center justify-center shadow-inner">
                         <img
-                            src="../../ProfileAvatar.jpg"
+                            src="/ProfileAvatar.jpg"
                             alt="Avatar Placeholder"
                             className="w-full h-full object-cover rounded-full"
                         />
