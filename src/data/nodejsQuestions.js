@@ -2,7 +2,7 @@ export const nodejsData = {
   id: "nodejs",
   title: "Node.js & Backend Interview Questions",
   level: "Freshers-to-Senior",
-  totalQuestions: 58,
+  totalQuestions: 82,
   questions: [
     {
       id: "node-1",
@@ -701,6 +701,275 @@ export const nodejsData = {
         "For large codebases, I structure the monorepo using tools like Turborepo, Nx, or simply npm/yarn Workspaces. The structure is separated into `apps` (the deployable Node services, like `api-gateway` or `user-service`) and `packages` (internal libraries). Inside `packages`, I strictly separate concerns: a `ui` package (if fullstack), a `config` package (shared ESLint/TSConfig), a `database` package (shared Prisma schemas/clients), and a `core-utils` package. This creates strict boundaries. Services in `apps` declare dependencies on specific `packages` in their `package.json`. This architecture allows for massive code reuse, atomic commits across boundaries, and heavily optimized caching where only the specific apps affected by a code change are rebuilt and redeployed.",
       codeSnippet:
         '// Root package.json using NPM Workspaces\n{\n  "name": "my-company-monorepo",\n  "private": true,\n  "workspaces": [\n    "apps/*",      // Contains api-gateway, auth-service, etc.\n    "packages/*"   // Contains db-client, shared-logger, eslint-config\n  ]\n}\n\n// Inside apps/auth-service/package.json\n{\n  "name": "@company/auth-service",\n  "dependencies": {\n    "express": "^4.18.0",\n    // Depends on internal shared packages rather than duplicating code\n    "@company/db-client": "*",\n    "@company/shared-logger": "*"\n  }\n}',
+    },
+    {
+      id: "node-sec-1",
+      questionNumber: 59,
+      question:
+        "How do JWT and bcrypt work together in authentication systems?",
+      difficulty: "advanced",
+      tags: ["jwt", "bcrypt", "hashing", "security"],
+      answer:
+        "**Bcrypt** is used to securely hash a user's password before saving it to the database, ensuring raw passwords are never stored. Upon login, bcrypt compares the entered password with the stored hash. If they match, the server generates a **JWT (JSON Web Token)** signed with a secret key. This JWT is sent to the client and included in the header of subsequent requests to verify the user's identity statelessly.",
+      codeSnippet:
+        "const bcrypt = require('bcrypt');\nconst jwt = require('jsonwebtoken');\n\n// 1. Hash password for DB\nconst hash = await bcrypt.hash(req.body.password, 10);\n\n// 2. Compare on login\nconst match = await bcrypt.compare(req.body.password, user.hash);\nif (match) {\n  // 3. Issue JWT\n  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });\n}",
+    },
+    {
+      id: "node-sec-2",
+      questionNumber: 60,
+      question: "How do you prevent hacking if a JWT is compromised?",
+      difficulty: "advanced",
+      tags: ["token-revocation", "refresh-tokens", "blacklist"],
+      answer:
+        "Because JWTs are stateless, they cannot be 'deleted' from the server. Mitigations include:\n1. **Short Expiration:** Keep access token lifetimes short (e.g., 15 minutes) and use refresh tokens.\n2. **Token Blacklisting:** Store revoked or logged-out tokens in an in-memory database like Redis until they expire.\n3. **Secret Rotation:** Changing the JWT signing secret invalidates all existing tokens.\n4. **IP/Device Tracking:** Bind tokens to specific client footprints to detect anomalies.",
+      codeSnippet:
+        "// Middleware checking Redis blacklist before allowing request\nconst token = req.headers.authorization.split(' ')[1];\nconst isBlacklisted = await redisClient.get(`blacklist_${token}`);\n\nif (isBlacklisted) {\n  return res.status(401).send('Token revoked');\n}\njwt.verify(token, process.env.JWT_SECRET);",
+    },
+    {
+      id: "node-sec-3",
+      questionNumber: 61,
+      question: "How do you implement OAuth in a Node.js backend?",
+      difficulty: "advanced",
+      tags: ["oauth2", "social-login", "authorization"],
+      answer:
+        "OAuth is commonly implemented using libraries like **Passport.js**. The flow is:\n1. The Node server redirects the client to the provider (e.g., Google).\n2. The user authenticates and the provider redirects back to a Node callback URL with an authorization code.\n3. Node exchanges this code for an access token from the provider.\n4. Node uses the token to fetch user profile data, creates/finds the user in the database, and finally issues its own internal JWT to the client.",
+      codeSnippet:
+        "const GoogleStrategy = require('passport-google-oauth20').Strategy;\n\npassport.use(new GoogleStrategy({\n    clientID: GOOGLE_CLIENT_ID,\n    clientSecret: GOOGLE_CLIENT_SECRET,\n    callbackURL: '/auth/google/callback'\n  },\n  async (accessToken, refreshToken, profile, done) => {\n    // Find or create user in your DB using profile.id\n    let user = await User.findOrCreate({ googleId: profile.id });\n    return done(null, user);\n  }\n));\n\napp.get('/auth/google', passport.authenticate('google', { scope: ['profile'] }));",
+    },
+    {
+      id: "node-sec-4",
+      questionNumber: 62,
+      question: "How does Helmet improve security in Express applications?",
+      difficulty: "advanced",
+      tags: ["helmet", "http-headers", "xss"],
+      answer:
+        "**Helmet** is a middleware that automatically sets over a dozen secure HTTP headers. It mitigates common web vulnerabilities by:\n- Removing the `X-Powered-By` header to hide the tech stack.\n- Setting `Content-Security-Policy` to prevent Cross-Site Scripting (XSS).\n- Setting `X-Frame-Options` to prevent Clickjacking attacks.\n- Enforcing `Strict-Transport-Security` to ensure HTTPS connections.",
+      codeSnippet:
+        "const express = require('express');\nconst helmet = require('helmet');\n\nconst app = express();\n\n// Adds 14+ secure HTTP headers automatically\napp.use(helmet());\n\n// You can also customize specific headers\napp.use(helmet.contentSecurityPolicy({\n  directives: {\n    defaultSrc: [\"'self'\"],\n  },\n}));",
+    },
+    {
+      id: "node-conc-1",
+      questionNumber: 63,
+      question:
+        "How do you handle concurrent requests using cluster in Node.js?",
+      difficulty: "advanced",
+      tags: ["cluster", "multi-core", "scaling"],
+      answer:
+        "Node.js runs on a single thread. The `cluster` module allows you to create child processes (workers) that share the same server port. The master process acts as a load balancer, distributing incoming connections among the workers using a round-robin algorithm. This allows Node.js to utilize multi-core systems efficiently.",
+      codeSnippet:
+        "const cluster = require('cluster');\nconst numCPUs = require('os').cpus().length;\n\nif (cluster.isMaster) {\n  // Fork workers for each CPU core\n  for (let i = 0; i < numCPUs; i++) {\n    cluster.fork();\n  }\n  cluster.on('exit', (worker) => cluster.fork()); // Restart on crash\n} else {\n  // Workers share the TCP connection\n  app.listen(3000);\n}",
+    },
+    {
+      id: "node-conc-2",
+      questionNumber: 64,
+      question:
+        "What is the difference between spawn and exec in child_process?",
+      difficulty: "advanced",
+      tags: ["spawn", "exec", "process"],
+      answer:
+        "Both create child processes, but handle data differently:\n- **`spawn`:** Streams the output asynchronously. It is ideal for long-running processes or handling massive amounts of data that shouldn't be loaded entirely into memory.\n- **`exec`:** Buffers the entire output into memory and returns it all at once via a callback. It is easier to use for quick commands but risks throwing a `maxBuffer` error if the output is too large.",
+      codeSnippet:
+        "const { spawn, exec } = require('child_process');\n\n// exec: Buffers output (Good for short commands)\nexec('ls -la', (error, stdout, stderr) => {\n  console.log(stdout);\n});\n\n// spawn: Streams output (Good for large data/long tasks)\nconst find = spawn('find', ['/']);\nfind.stdout.on('data', (data) => {\n  console.log(`Streamed chunk: ${data}`);\n});",
+    },
+    {
+      id: "node-conc-3",
+      questionNumber: 65,
+      question: "How do you implement a mutex in Node.js?",
+      difficulty: "advanced",
+      tags: ["mutex", "race-condition", "locks"],
+      answer:
+        "While Node's single-threaded nature prevents traditional thread-based memory race conditions, async operations can still cause race conditions (e.g., double DB inserts). You can implement an application-level mutex using npm packages like `async-mutex` to queue async calls, or use **Redis Distributed Locks (e.g., Redlock)** to handle mutexes across multiple scaled Node.js instances.",
+      codeSnippet:
+        "const { Mutex } = require('async-mutex');\nconst mutex = new Mutex();\nlet counter = 0;\n\nasync function incrementSafely() {\n  const release = await mutex.acquire();\n  try {\n    // Async operation simulating DB read/write\n    let current = await getFromDB(); \n    await saveToDB(current + 1);\n  } finally {\n    release(); // Ensure lock is released even if errors occur\n  }\n}",
+    },
+    {
+      id: "node-conc-4",
+      questionNumber: 66,
+      question: "What causes event loop starvation and how do you fix it?",
+      difficulty: "advanced",
+      tags: ["event-loop", "blocking", "performance"],
+      answer:
+        "Event loop starvation happens when a long-running, synchronous, CPU-intensive task (like heavy cryptography, deep JSON parsing, or massive loops) blocks the main thread, preventing other callbacks (like HTTP requests) from executing.\n**Fixes:** Offload heavy computations to `worker_threads`, partition tasks using `setImmediate()`, or rewrite the bottleneck logic in a lower-level C++ addon or Rust module.",
+      codeSnippet:
+        "const { Worker } = require('worker_threads');\n\napp.get('/heavy-task', (req, res) => {\n  // Offload to a background thread to avoid starving the event loop\n  const worker = new Worker('./heavy-worker.js', {\n    workerData: { data: req.body }\n  });\n  \n  worker.on('message', result => res.send(result));\n  worker.on('error', err => res.status(500).send(err));\n});",
+    },
+    {
+      id: "node-perf-1",
+      questionNumber: 67,
+      question: "How do you fix latency issues in a Node.js service?",
+      difficulty: "advanced",
+      tags: ["profiling", "apm", "latency"],
+      answer:
+        "1. **Identify Bottlenecks:** Use APM tools (Datadog, New Relic) or Node's built-in profiler (`--prof`).\n2. **Database:** Optimize queries, add indexes, or introduce Redis caching for frequent reads.\n3. **Event Loop:** Ensure no synchronous code is blocking the main thread.\n4. **Network:** Use connection pooling, enable gzip/brotli compression, and optimize payload sizes.",
+      codeSnippet:
+        "// Example: Adding Redis caching to reduce DB latency\napp.get('/user/:id', async (req, res) => {\n  const cacheKey = `user:${req.params.id}`;\n  const cachedUser = await redis.get(cacheKey);\n  \n  if (cachedUser) return res.json(JSON.parse(cachedUser));\n  \n  const user = await db.query('SELECT * FROM users WHERE id = ?', [req.params.id]);\n  await redis.setex(cacheKey, 3600, JSON.stringify(user)); // Cache for 1 hr\n  res.json(user);\n});",
+    },
+    {
+      id: "node-perf-2",
+      questionNumber: 68,
+      question: "How do you work with large data sets efficiently?",
+      difficulty: "advanced",
+      tags: ["streams", "memory", "backpressure"],
+      answer:
+        "Instead of loading all data into memory at once (which crashes the server via Out-Of-Memory errors), use **Streams**. For example, use `fs.createReadStream` to read a file chunk-by-chunk, or use streaming cursors for database queries. It's vital to handle **backpressure** (using `.pipe()` or `stream.pipeline()`) so the reading stream doesn't overwhelm the writing stream.",
+      codeSnippet:
+        "const fs = require('fs');\nconst csv = require('csv-parser');\n\n// Streams large file in small chunks, keeping RAM usage low\nfs.createReadStream('massive-dataset.csv')\n  .pipe(csv())\n  .on('data', (row) => {\n    // Process row by row\n    processRow(row);\n  })\n  .on('end', () => console.log('CSV file successfully processed'));",
+    },
+    {
+      id: "node-perf-3",
+      questionNumber: 69,
+      question: "Buffer vs Stream — what is the difference?",
+      difficulty: "advanced",
+      tags: ["buffer", "stream", "data-flow"],
+      answer:
+        "- **Buffer:** A temporary holding spot in memory for a complete, static chunk of raw binary data. It has a fixed size and must fully load before processing.\n- **Stream:** An abstraction for a continuous flow of data over time. Streams use small buffers internally but process data sequentially (chunk-by-chunk), making them highly memory-efficient for large files or network responses.",
+      codeSnippet:
+        "// Buffer: Entire file loaded into RAM at once\nconst fileBuffer = fs.readFileSync('video.mp4'); \nres.send(fileBuffer); \n\n// Stream: File read and sent in chunks, saving RAM\nconst fileStream = fs.createReadStream('video.mp4');\nfileStream.pipe(res);",
+    },
+    {
+      id: "node-perf-4",
+      questionNumber: 70,
+      question: "How do WeakMap objects help prevent memory leaks?",
+      difficulty: "advanced",
+      tags: ["weakmap", "gc", "memory-leaks"],
+      answer:
+        "A `WeakMap` holds 'weak' references to its keys (which must be objects). If there are no other references to an object used as a key in a WeakMap, the Garbage Collector (GC) will automatically clear it from memory. This prevents memory leaks that occur when standard `Map` or Array structures hold onto objects that are no longer needed elsewhere in the application.",
+      codeSnippet:
+        "let user = { id: 1, name: 'Alice' };\n\n// WeakMap uses the object itself as a key\nconst userCache = new WeakMap();\nuserCache.set(user, { lastLogin: Date.now() });\n\n// If we nullify 'user', the GC deletes the entry from userCache automatically\nuser = null; \n// Memory leak avoided!",
+    },
+    {
+      id: "node-file-1",
+      questionNumber: 71,
+      question: "How do you read and write files using fs and streams?",
+      difficulty: "intermediate",
+      tags: ["fs", "readFile", "createReadStream"],
+      answer:
+        "Use `fs.createReadStream('input.txt')` to open a readable stream and `fs.createWriteStream('output.txt')` for a writable stream. Connect them using the newer, error-safe utility `stream.pipeline(readStream, writeStream, (err) => {...})`. This prevents memory bloat by moving data in small chunks rather than using `fs.readFile()` which loads the entire file into RAM.",
+      codeSnippet:
+        "const fs = require('fs');\nconst { pipeline } = require('stream');\n\nconst readStream = fs.createReadStream('huge-input.txt');\nconst writeStream = fs.createWriteStream('huge-output.txt');\n\n// pipeline handles backpressure and cleans up if errors occur\npipeline(readStream, writeStream, (err) => {\n  if (err) console.error('Pipeline failed', err);\n  else console.log('Pipeline succeeded');\n});",
+    },
+    {
+      id: "node-file-2",
+      questionNumber: 72,
+      question: "How does Multer handle file uploads securely?",
+      difficulty: "intermediate",
+      tags: ["multer", "uploads", "security"],
+      answer:
+        "Multer is an Express middleware for handling `multipart/form-data`. To use it securely:\n1. Limit file sizes via the `limits: { fileSize: bytes }` option.\n2. Restrict allowed file types using the `fileFilter` function to check mimetypes and file extensions.\n3. Never trust the client's original filename; generate a unique, random string for saved files to prevent path traversal and overwriting attacks.",
+      codeSnippet:
+        "const multer = require('multer');\nconst path = require('path');\n\nconst upload = multer({\n  dest: 'uploads/',\n  limits: { fileSize: 2 * 1024 * 1024 }, // Max 2MB\n  fileFilter: (req, file, cb) => {\n    // Only allow specific mimetypes\n    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {\n      cb(null, true);\n    } else {\n      cb(new Error('Invalid file type'), false);\n    }\n  }\n});\n\napp.post('/profile', upload.single('avatar'), (req, res) => { res.send('Uploaded!'); });",
+    },
+    {
+      id: "node-log-1",
+      questionNumber: 73,
+      question:
+        "How do you implement structured logging using Winston and Morgan?",
+      difficulty: "intermediate",
+      tags: ["winston", "morgan", "observability"],
+      answer:
+        "**Morgan** is used as middleware to automatically log incoming HTTP request data (method, URL, status code). **Winston** is a versatile logging library that formats logs into structured data (like JSON) and sends them to different transports (files, console, external APIs). They work together by configuring Morgan to write its HTTP logs directly into Winston's stream, centralizing all app and server logs.",
+      codeSnippet:
+        "const winston = require('winston');\nconst morgan = require('morgan');\n\nconst logger = winston.createLogger({\n  format: winston.format.json(),\n  transports: [new winston.transports.Console()]\n});\n\n// Pipe Morgan HTTP logs into Winston\napp.use(morgan('combined', { \n  stream: { write: message => logger.info(message.trim()) } \n}));\n\napp.get('/', (req, res) => {\n  logger.warn('Manual log entry here');\n  res.send('Hello');\n});",
+    },
+    {
+      id: "node-log-2",
+      questionNumber: 74,
+      question: "How do you debug microservices in production?",
+      difficulty: "intermediate",
+      tags: ["microservices", "tracing", "logging"],
+      answer:
+        "Debugging microservices requires **Distributed Tracing**. You generate a unique `correlationId` or `traceId` at the API Gateway when a request enters the system. This ID is passed in the HTTP headers to every downstream service. All logs (via Winston) include this ID, allowing you to use aggregators like Datadog, ELK stack, or Jaeger to query a single ID and see the entire journey of a request across all services.",
+      codeSnippet:
+        "const { v4: uuidv4 } = require('uuid');\n\n// Middleware to assign/extract Correlation ID\napp.use((req, res, next) => {\n  req.correlationId = req.headers['x-correlation-id'] || uuidv4();\n  // Attach to response so client sees it\n  res.setHeader('x-correlation-id', req.correlationId);\n  next();\n});\n\n// Use in logging\napp.get('/process', (req, res) => {\n  logger.info({ message: 'Processing started', traceId: req.correlationId });\n  // Pass `req.correlationId` as a header in downstream Axios requests\n});",
+    },
+    {
+      id: "node-async-1",
+      questionNumber: 75,
+      question: "How do you calculate a sum using Promise?",
+      difficulty: "intermediate",
+      tags: ["promise", "async-await"],
+      answer:
+        "You can wrap a calculation in a promise object. *Note: Wrapping purely synchronous operations like addition in a Promise adds unnecessary overhead unless it is part of an async pipeline or bridging callback-based APIs.*",
+      codeSnippet:
+        "const sumAsync = (a, b) => {\n  return new Promise((resolve, reject) => {\n    if (typeof a !== 'number' || typeof b !== 'number') {\n      reject(new Error('Inputs must be numbers'));\n    }\n    resolve(a + b);\n  });\n};\n\nsumAsync(5, 10)\n  .then(result => console.log(result))  // 15\n  .catch(err => console.error(err));",
+    },
+    {
+      id: "node-async-2",
+      questionNumber: 76,
+      question: "What is Promise.race and when should you use it?",
+      difficulty: "intermediate",
+      tags: ["promise-race", "timeout"],
+      answer:
+        "`Promise.race(iterable)` takes an array of promises and resolves or rejects as soon as the **first** promise in the iterable settles (either fulfilled or rejected). A common use case is implementing a **timeout for an API call**: racing a `fetch()` promise against a `setTimeout` promise that rejects after 5 seconds.",
+      codeSnippet:
+        "const fetchWithTimeout = (url, timeoutMs) => {\n  const timeoutPromise = new Promise((_, reject) => \n    setTimeout(() => reject(new Error('Request timed out')), timeoutMs)\n  );\n  \n  // Races the fetch against the timeout\n  return Promise.race([\n    fetch(url),\n    timeoutPromise\n  ]);\n};\n\nfetchWithTimeout('https://api.example.com/data', 3000)\n  .then(res => console.log('Success!'))\n  .catch(err => console.error(err.message));",
+    },
+    {
+      id: "node-async-3",
+      questionNumber: 77,
+      question: "How does process.nextTick() affect execution order?",
+      difficulty: "intermediate",
+      tags: ["nextTick", "microtask"],
+      answer:
+        "Callbacks passed to `process.nextTick()` are executed **immediately after the current operation completes**, before the event loop continues to its next phase (like timers or I/O callbacks). It has higher priority than Promise microtasks. It is used to ensure synchronous code completely resolves before an async callback fires, but overusing it can cause event loop starvation.",
+      codeSnippet:
+        "console.log('1. Sync block');\n\nsetTimeout(() => console.log('4. Timer phase'), 0);\n\nPromise.resolve().then(() => console.log('3. Promise microtask'));\n\nprocess.nextTick(() => console.log('2. nextTick queue (highest priority)'));\n\n// Output order: 1, 2, 3, 4",
+    },
+    {
+      id: "node-db-1",
+      questionNumber: 78,
+      question: "What is connection pooling and why is it important?",
+      difficulty: "advanced",
+      tags: ["connection-pool", "db-performance"],
+      answer:
+        "Establishing a new database connection involves expensive network handshakes and authentication. A **connection pool** creates and maintains a set of open, reusable connections. When a query is needed, the app borrows a connection from the pool and returns it when finished. This drastically reduces query latency, saves server CPU, and prevents DB crashes from opening too many concurrent connections.",
+      codeSnippet:
+        "const { Pool } = require('pg');\n\n// Initialize a connection pool\nconst pool = new Pool({\n  max: 20, // Max 20 clients in the pool\n  idleTimeoutMillis: 30000 // Close idle clients after 30 seconds\n});\n\napp.get('/users', async (req, res) => {\n  const client = await pool.connect(); // Borrow connection\n  try {\n    const result = await client.query('SELECT * FROM users');\n    res.json(result.rows);\n  } finally {\n    client.release(); // Return connection to pool\n  }\n});",
+    },
+    {
+      id: "node-db-2",
+      questionNumber: 79,
+      question:
+        "What is TRUNCATE in a database and how is it different from DELETE?",
+      difficulty: "advanced",
+      tags: ["truncate", "delete", "sql"],
+      answer:
+        "- **DELETE:** A DML command that removes rows one by one. It records each deletion in the transaction log and fires table triggers. It is slower but can be rolled back and used with a `WHERE` clause.\n- **TRUNCATE:** A DDL command that rapidly empties a table by deallocating the data pages storing the rows. It is much faster, logs the page deallocation rather than individual rows, doesn't fire triggers, and resets identity columns.",
+      codeSnippet:
+        "-- DELETE: Slower, logs every row, can be filtered, retains auto-increment counter\nDELETE FROM users WHERE active = false;\n\n-- TRUNCATE: Faster, empties entire table, resets auto-increment counter\nTRUNCATE TABLE session_logs;",
+    },
+    {
+      id: "node-devops-1",
+      questionNumber: 80,
+      question: "How does PM2 cluster mode improve reliability?",
+      difficulty: "intermediate",
+      tags: ["pm2", "cluster-mode"],
+      answer:
+        "PM2 is a production process manager. Running it in cluster mode (`pm2 start app.js -i max`) automatically utilizes Node's built-in `cluster` module to spawn an instance of your app across all available CPU cores. This improves reliability by providing built-in load balancing, zero-downtime reloads, and automatic restarts if an individual worker process crashes.",
+      codeSnippet:
+        "# Start app across all available CPU cores\npm2 start server.js -i max\n\n# Restart apps with zero downtime (waits for one to start before killing next)\npm2 reload all\n\n# Automatically restart apps on server reboot\npm2 startup",
+    },
+    {
+      id: "node-devops-2",
+      questionNumber: 81,
+      question: "How do cron jobs and webhooks work in backend systems?",
+      difficulty: "intermediate",
+      tags: ["cron", "webhooks"],
+      answer:
+        "- **Cron Jobs:** Time-driven, scheduled tasks that run at specific intervals (e.g., clearing old database logs every midnight). They pull data or execute scripts based on a clock.\n- **Webhooks:** Event-driven HTTP callbacks. Instead of polling for data, external services push data to a specific URL on your backend immediately when an event occurs (e.g., Stripe sending a POST request when a payment succeeds).",
+      codeSnippet:
+        "const cron = require('node-cron');\n\n// CRON: Runs every day at midnight server time\ncron.schedule('0 0 * * *', async () => {\n  await db.query('DELETE FROM expired_sessions');\n  console.log('Cleanup complete');\n});\n\n// WEBHOOK: Endpoint exposed to receive events from external APIs (like Stripe)\napp.post('/webhook/stripe', express.raw({type: 'application/json'}), (req, res) => {\n  const event = req.body;\n  if (event.type === 'payment_intent.succeeded') handlePayment(event.data.object);\n  res.json({received: true});\n});",
+    },
+    {
+      id: "node-devops-3",
+      questionNumber: 82,
+      question: "How do you handle uncaught exceptions safely in production?",
+      difficulty: "intermediate",
+      tags: ["uncaughtException", "process"],
+      answer:
+        "When an `uncaughtException` or `unhandledRejection` occurs, the Node application enters an undefined, potentially unstable state (e.g., leaked memory or open connections). You should:\n1. Listen for the event `process.on('uncaughtException', ...)`.\n2. Log the error synchronously to a persistent store.\n3. Gracefully shut down active connections.\n4. **Exit the process** (`process.exit(1)`). Let a process manager (like PM2 or Docker/Kubernetes) automatically restart the application from a clean state.",
+      codeSnippet:
+        "process.on('uncaughtException', (err) => {\n  // 1. Log error safely\n  console.error('CRITICAL: Uncaught Exception!', err.message);\n  \n  // 2. Shut down the server gracefully\n  server.close(() => {\n    // 3. Exit the process and let PM2/Docker restart it safely\n    process.exit(1); \n  });\n\n  // Force exit if graceful shutdown fails after 10s\n  setTimeout(() => process.exit(1), 10000).unref();\n});",
     },
   ],
 };
